@@ -293,6 +293,10 @@ function App() {
             @media print { 
               body { padding: 10px; }
               .day-container, .amount-section { margin-bottom: 10px; padding: 10px; }
+              @page { margin: 0; size: auto; }
+              @page :first { margin-top: 0; }
+              @page :left { margin-left: 0; }
+              @page :right { margin-right: 0; }
             }
           </style>
         </head>

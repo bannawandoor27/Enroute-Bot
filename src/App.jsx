@@ -1,12 +1,43 @@
 import React, { useState } from 'react';
 
 function App() {
+  const defaultInclusions = [
+    'Hotel Accommodation',
+    'Breakfast',
+    'Airport Transfers',
+    'Sightseeing as per itinerary',
+    'Tour Guide'
+  ];
+
+  const defaultExclusions = [
+    'Airfare',
+    'Lunch and Dinner',
+    'Entry Fees',
+    'Personal Expenses',
+    'Travel Insurance'
+  ];
+
+  const loadSavedItems = () => {
+    const savedInclusions = JSON.parse(localStorage.getItem('customInclusions') || '[]');
+    const savedExclusions = JSON.parse(localStorage.getItem('customExclusions') || '[]');
+    
+    const mergedInclusions = [...defaultInclusions, ...savedInclusions];
+    const mergedExclusions = [...defaultExclusions, ...savedExclusions];
+    
+    return {
+      inclusions: mergedInclusions.map(item => ({ text: item, checked: true })),
+      exclusions: mergedExclusions.map(item => ({ text: item, checked: true }))
+    };
+  };
+
+  const initialState = loadSavedItems();
   const PlusIcon = window.HeroiconsOutline?.PlusIcon;
   const TrashIcon = window.HeroiconsOutline?.TrashIcon;
 
   const [days, setDays] = useState([{ activities: '', date: '' }]);
   const [packageAmount, setPackageAmount] = useState(0);
   const [includeGST, setIncludeGST] = useState(false);
+  const [manualPackageAmount, setManualPackageAmount] = useState('');
   const [clientName, setClientName] = useState('');
   const [participants, setParticipants] = useState({
     adults: { count: 0, costPerHead: 0 },
@@ -14,6 +45,51 @@ function App() {
     infants: { count: 0, costPerHead: 0 }
   });
   const [isManualTotal, setIsManualTotal] = useState(false);
+  const [inclusions, setInclusions] = useState(initialState.inclusions);
+  const [exclusions, setExclusions] = useState(initialState.exclusions);
+  const [newInclusion, setNewInclusion] = useState('');
+  const [newExclusion, setNewExclusion] = useState('');
+
+  const addInclusion = () => {
+    if (newInclusion.trim()) {
+      const updatedInclusions = [...inclusions, { text: newInclusion.trim(), checked: true }];
+      setInclusions(updatedInclusions);
+      setNewInclusion('');
+      
+      const customInclusions = updatedInclusions
+        .filter(item => !defaultInclusions.includes(item.text))
+        .map(item => item.text);
+      localStorage.setItem('customInclusions', JSON.stringify(customInclusions));
+    }
+  };
+
+  const addExclusion = () => {
+    if (newExclusion.trim()) {
+      const updatedExclusions = [...exclusions, { text: newExclusion.trim(), checked: true }];
+      setExclusions(updatedExclusions);
+      setNewExclusion('');
+      
+      const customExclusions = updatedExclusions
+        .filter(item => !defaultExclusions.includes(item.text))
+        .map(item => item.text);
+      localStorage.setItem('customExclusions', JSON.stringify(customExclusions));
+    }
+  };
+
+  const toggleInclusion = (index) => {
+    const newInclusions = inclusions.map((item, i) =>
+      i === index ? { ...item, checked: !item.checked } : item
+    );
+    setInclusions(newInclusions);
+  };
+
+  const toggleExclusion = (index) => {
+    const newExclusions = exclusions.map((item, i) =>
+      i === index ? { ...item, checked: !item.checked } : item
+    );
+    setExclusions(newExclusions);
+  };
+
 
   const validateNumberInput = (value) => {
     return value === '' || /^\d*$/.test(value);
@@ -73,7 +149,10 @@ function App() {
     };
     setParticipants(newParticipants);
     if (!isManualTotal) {
-      setPackageAmount(calculateAutoTotal());
+      const newTotal = (newParticipants.adults.count * newParticipants.adults.costPerHead) +
+                      (newParticipants.children.count * newParticipants.children.costPerHead) +
+                      (newParticipants.infants.count * newParticipants.infants.costPerHead);
+      setPackageAmount(newTotal);
     }
   };
 
@@ -121,7 +200,24 @@ function App() {
           `).join('')}
 
           <div class="amount-section">
-            <h3 class="amount-title">Financial Details</h3>
+            <h3 class="amount-title">Package Details</h3>
+            <div class="mb-4">
+              <h4 class="text-lg font-semibold text-teal-800 mb-2">Inclusions:</h4>
+              <ul class="list-disc pl-5 space-y-1">
+                ${inclusions.filter(item => item.checked).map(item => `
+                  <li class="text-gray-700">${item.text}</li>
+                `).join('')}
+              </ul>
+            </div>
+            <div class="mb-6">
+              <h4 class="text-lg font-semibold text-teal-800 mb-2">Exclusions:</h4>
+              <ul class="list-disc pl-5 space-y-1">
+                ${exclusions.filter(item => item.checked).map(item => `
+                  <li class="text-gray-700">${item.text}</li>
+                `).join('')}
+              </ul>
+            </div>
+            <h3 class="amount-title mt-8">Financial Details</h3>
             <p class="amount-detail">Per Person Charges:</p>
             <p class="gst-details">Adults (10+): ${participants.adults.count} × ₹${participants.adults.costPerHead.toLocaleString('en-IN')} = ₹${(participants.adults.count * participants.adults.costPerHead).toLocaleString('en-IN')}</p>
             <p class="gst-details">Children (5-10): ${participants.children.count} × ₹${participants.children.costPerHead.toLocaleString('en-IN')} = ₹${(participants.children.count * participants.children.costPerHead).toLocaleString('en-IN')}</p>
@@ -293,8 +389,13 @@ function App() {
                       type="text"
                       className="w-48 p-2 border rounded"
                       placeholder="Enter package amount"
-                      value={packageAmount}
-                      onChange={(e) => validateNumberInput(e.target.value) && setPackageAmount(e.target.value === '' ? 0 : Number(e.target.value))}
+                      value={manualPackageAmount}
+                      onChange={(e) => {
+                        if (validateNumberInput(e.target.value)) {
+                          setManualPackageAmount(e.target.value);
+                          setPackageAmount(e.target.value === '' ? 0 : Number(e.target.value));
+                        }
+                      }}
                       disabled={!isManualTotal}
                     />
                   </div>
@@ -308,6 +409,73 @@ function App() {
                     />
                     <label htmlFor="includeGST">Include GST (18%)</label>
                   </div>
+                  
+                  <div className="mb-6 p-4 border rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">Package Inclusions</h3>
+                    <div className="space-y-2 mb-4 max-h-48 overflow-y-auto pr-2">
+                      {inclusions.map((item, index) => (
+                        <div key={index} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={item.checked}
+                            onChange={() => toggleInclusion(index)}
+                            className="mr-2"
+                          />
+                          <span className={item.checked ? 'text-gray-900' : 'text-gray-500'}>{item.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 p-2 border rounded"
+                        placeholder="Add new inclusion"
+                        value={newInclusion}
+                        onChange={(e) => setNewInclusion(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addInclusion()}
+                      />
+                      <button
+                        onClick={addInclusion}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 p-4 border rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">Package Exclusions</h3>
+                    <div className="space-y-2 mb-4 max-h-48 overflow-y-auto pr-2">
+                      {exclusions.map((item, index) => (
+                        <div key={index} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={item.checked}
+                            onChange={() => toggleExclusion(index)}
+                            className="mr-2"
+                          />
+                          <span className={item.checked ? 'text-gray-900' : 'text-gray-500'}>{item.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 p-2 border rounded"
+                        placeholder="Add new exclusion"
+                        value={newExclusion}
+                        onChange={(e) => setNewExclusion(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addExclusion()}
+                      />
+                      <button
+                        onClick={addExclusion}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="text-right">
                     <p className="text-lg">Package Amount: ₹{packageAmount.toLocaleString('en-IN')}</p>
                     {includeGST && (

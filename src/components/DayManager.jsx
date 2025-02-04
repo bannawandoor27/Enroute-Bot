@@ -22,6 +22,13 @@ function DayManager({ days, updateDay, removeDay, addDay, PlusIcon, TrashIcon })
             </button>
           </div>
           <input
+            type="text"
+            className="w-full p-2 border rounded mb-2"
+            placeholder="Day header (optional)"
+            value={day.header || ''}
+            onChange={(e) => updateDay(index, 'header', e.target.value)}
+          />
+          <input
             type="date"
             className="w-full p-2 border rounded mb-2"
             value={day.date || ''}

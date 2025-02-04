@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DayManager from './components/DayManager';
 import ParticipantDetails from './components/ParticipantDetails';
 import PackageDetails from './components/PackageDetails';
@@ -48,11 +48,13 @@ function App() {
   const PlusIcon = window.HeroiconsOutline?.PlusIcon;
   const TrashIcon = window.HeroiconsOutline?.TrashIcon;
 
-  const [days, setDays] = useState([{ activities: '', date: '', mealPlan: 'none' }]);
+  const [days, setDays] = useState([{ activities: '', date: '', mealPlan: 'none', header: '' }]);
   const [packageAmount, setPackageAmount] = useState(0);
   const [includeGST, setIncludeGST] = useState(false);
   const [manualPackageAmount, setManualPackageAmount] = useState('');
   const [clientName, setClientName] = useState('');
+  const [packageType, setPackageType] = useState('');
+  const [location, setLocation] = useState('');
   const [participants, setParticipants] = useState({
     adults: { count: 0, costPerHead: 0 },
     children: { count: 0, costPerHead: 0 },
@@ -65,6 +67,8 @@ function App() {
   const [newExclusion, setNewExclusion] = useState('');
   const [terms, setTerms] = useState(initialState.terms);
   const [newTerm, setNewTerm] = useState('');
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
 
   const addInclusion = () => {
     if (newInclusion.trim()) {
@@ -139,7 +143,7 @@ function App() {
 
   const addDay = () => {
     const lastDay = days[days.length - 1];
-    const newDay = { activities: '', mealPlan: 'none' };
+    const newDay = { activities: '', mealPlan: 'none', header: '' };
     if (lastDay.date) {
       const nextDate = new Date(lastDay.date);
       nextDate.setDate(nextDate.getDate() + 1);
@@ -196,6 +200,68 @@ function App() {
   const gstAmount = includeGST ? packageAmount * gstRate : 0;
   const totalAmount = packageAmount + gstAmount;
 
+  const loadTemplates = () => {
+    const savedTemplates = JSON.parse(localStorage.getItem('packageTemplates') || '[]');
+    setTemplates(savedTemplates);
+  };
+
+  const saveCurrentAsTemplate = () => {
+    if (!location || !packageType) return;
+
+    const templateName = `${location} - ${packageType}`;
+    const templateData = {
+      name: templateName,
+      location,
+      packageType,
+      days,
+      participants,
+      inclusions: inclusions.map(item => ({ ...item })),
+      exclusions: exclusions.map(item => ({ ...item })),
+      terms: terms.map(item => ({ ...item })),
+      includeGST,
+      isManualTotal,
+      packageAmount
+    };
+
+    const existingTemplates = JSON.parse(localStorage.getItem('packageTemplates') || '[]');
+    const templateIndex = existingTemplates.findIndex(t => t.name === templateName);
+
+    if (templateIndex >= 0) {
+      existingTemplates[templateIndex] = templateData;
+    } else {
+      existingTemplates.push(templateData);
+    }
+
+    localStorage.setItem('packageTemplates', JSON.stringify(existingTemplates));
+    setTemplates(existingTemplates);
+  };
+
+  const loadTemplate = (templateName) => {
+    const template = templates.find(t => t.name === templateName);
+    if (!template) return;
+
+    setLocation(template.location);
+    setPackageType(template.packageType);
+    setDays(template.days.map(day => ({ ...day })));
+    setParticipants({ ...template.participants });
+    setInclusions(template.inclusions.map(item => ({ ...item })));
+    setExclusions(template.exclusions.map(item => ({ ...item })));
+    setTerms(template.terms.map(item => ({ ...item })));
+    setIncludeGST(template.includeGST);
+    setIsManualTotal(template.isManualTotal);
+    setPackageAmount(template.packageAmount);
+  };
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      loadTemplate(selectedTemplate);
+    }
+  }, [selectedTemplate]);
+
   const generatePrintableItinerary = () => {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -224,12 +290,14 @@ function App() {
           <div class="header">
             <h1 class="title">Travel Itinerary</h1>
             ${clientName ? `<p class="subtitle">Prepared for: ${clientName}</p>` : ''}
+            ${packageType ? `<p class="subtitle">Package Type: ${packageType}</p>` : ''}
+            ${location ? `<p class="subtitle">Location: ${location}</p>` : ''}
             <p class="subtitle">Your Personalized Journey Plan</p>
           </div>
 
           ${days.map((day, index) => `
             <div class="day-container">
-              <h2 class="day-title">Day ${index + 1}</h2>
+              <h2 class="day-title">Day ${index + 1}${day.header ? `: ${day.header}` : ''}</h2>
               ${day.date ? `<p class="day-date">${new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>` : ''}
               <p class="day-activities">${day.activities || 'No activities planned'}</p>
               <p class="day-meal-plan" style="color: #14665e; font-size: 15px; margin-top: 10px;">Meal Plan: ${
@@ -309,12 +377,47 @@ function App() {
               <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
                 <h1 className="text-2xl font-bold mb-8 text-center">Travel Itinerary Generator</h1>
                 <div className="mb-6">
+                  <div className="flex gap-2 mb-4">
+                    <select
+                      className="flex-1 p-2 border rounded"
+                      value={selectedTemplate}
+                      onChange={(e) => setSelectedTemplate(e.target.value)}
+                    >
+                      <option value="">Select a template</option>
+                      {templates.map(template => (
+                        <option key={template.name} value={template.name}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={saveCurrentAsTemplate}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      disabled={!location || !packageType}
+                    >
+                      Save as Template
+                    </button>
+                  </div>
                   <input
                     type="text"
                     className="w-full p-2 border rounded mb-2"
                     placeholder="Client Name (Optional)"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded mb-2"
+                    placeholder="Package Type (e.g., Honeymoon, Family, Adventure)"
+                    value={packageType}
+                    onChange={(e) => setPackageType(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded mb-2"
+                    placeholder="Location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                   />
                 </div>
                 <DayManager

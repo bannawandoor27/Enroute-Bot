@@ -1,6 +1,13 @@
 import React from 'react';
 
 function DayManager({ days, updateDay, removeDay, addDay, PlusIcon, TrashIcon }) {
+  const mealPlanOptions = [
+    { value: 'none', label: 'No Meals' },
+    { value: 'breakfast', label: 'Breakfast Only' },
+    { value: 'breakfast_dinner', label: 'Breakfast & Dinner' },
+    { value: 'all_meals', label: 'All Meals (B+L+D)' },
+    { value: 'dinner', label: 'Dinner Only' }
+  ];
   return (
     <div>
       {days.map((day, index) => (
@@ -26,6 +33,17 @@ function DayManager({ days, updateDay, removeDay, addDay, PlusIcon, TrashIcon })
             value={day.activities}
             onChange={(e) => updateDay(index, 'activities', e.target.value)}
           />
+          <select
+            className="w-full p-2 border rounded"
+            value={day.mealPlan || 'none'}
+            onChange={(e) => updateDay(index, 'mealPlan', e.target.value)}
+          >
+            {mealPlanOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       ))}
       <button

@@ -20,16 +20,27 @@ function App() {
     'Travel Insurance'
   ];
 
+  const defaultTerms = [
+    'Cancellation charges will be applicable as per policy',
+    'Prices are subject to change without prior notice',
+    'Rooms are subject to availability',
+    'Early check-in and late check-out are subject to availability',
+    'Government issued photo ID is mandatory for check-in'
+  ];
+
   const loadSavedItems = () => {
     const savedInclusions = JSON.parse(localStorage.getItem('customInclusions') || '[]');
     const savedExclusions = JSON.parse(localStorage.getItem('customExclusions') || '[]');
+    const savedTerms = JSON.parse(localStorage.getItem('customTerms') || '[]');
     
     const mergedInclusions = [...defaultInclusions, ...savedInclusions];
     const mergedExclusions = [...defaultExclusions, ...savedExclusions];
+    const mergedTerms = [...defaultTerms, ...savedTerms];
     
     return {
       inclusions: mergedInclusions.map(item => ({ text: item, checked: true })),
-      exclusions: mergedExclusions.map(item => ({ text: item, checked: true }))
+      exclusions: mergedExclusions.map(item => ({ text: item, checked: true })),
+      terms: mergedTerms.map(item => ({ text: item, checked: true }))
     };
   };
 
@@ -37,7 +48,7 @@ function App() {
   const PlusIcon = window.HeroiconsOutline?.PlusIcon;
   const TrashIcon = window.HeroiconsOutline?.TrashIcon;
 
-  const [days, setDays] = useState([{ activities: '', date: '' }]);
+  const [days, setDays] = useState([{ activities: '', date: '', mealPlan: 'none' }]);
   const [packageAmount, setPackageAmount] = useState(0);
   const [includeGST, setIncludeGST] = useState(false);
   const [manualPackageAmount, setManualPackageAmount] = useState('');
@@ -52,6 +63,8 @@ function App() {
   const [exclusions, setExclusions] = useState(initialState.exclusions);
   const [newInclusion, setNewInclusion] = useState('');
   const [newExclusion, setNewExclusion] = useState('');
+  const [terms, setTerms] = useState(initialState.terms);
+  const [newTerm, setNewTerm] = useState('');
 
   const addInclusion = () => {
     if (newInclusion.trim()) {
@@ -64,6 +77,26 @@ function App() {
         .map(item => item.text);
       localStorage.setItem('customInclusions', JSON.stringify(customInclusions));
     }
+  };
+
+  const addTerm = () => {
+    if (newTerm.trim()) {
+      const updatedTerms = [...terms, { text: newTerm.trim(), checked: true }];
+      setTerms(updatedTerms);
+      setNewTerm('');
+      
+      const customTerms = updatedTerms
+        .filter(item => !defaultTerms.includes(item.text))
+        .map(item => item.text);
+      localStorage.setItem('customTerms', JSON.stringify(customTerms));
+    }
+  };
+
+  const toggleTerm = (index) => {
+    const newTerms = terms.map((item, i) =>
+      i === index ? { ...item, checked: !item.checked } : item
+    );
+    setTerms(newTerms);
   };
 
   const addExclusion = () => {
@@ -106,7 +139,7 @@ function App() {
 
   const addDay = () => {
     const lastDay = days[days.length - 1];
-    const newDay = { activities: '' };
+    const newDay = { activities: '', mealPlan: 'none' };
     if (lastDay.date) {
       const nextDate = new Date(lastDay.date);
       nextDate.setDate(nextDate.getDate() + 1);
@@ -199,6 +232,15 @@ function App() {
               <h2 class="day-title">Day ${index + 1}</h2>
               ${day.date ? `<p class="day-date">${new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>` : ''}
               <p class="day-activities">${day.activities || 'No activities planned'}</p>
+              <p class="day-meal-plan" style="color: #14665e; font-size: 15px; margin-top: 10px;">Meal Plan: ${
+                {
+                  'none': 'No Meals ',
+                  'breakfast': 'Breakfast ',
+                  'breakfast_dinner': 'Breakfast & Dinner ',
+                  'all_meals': 'All Meals  (B+L+D)',
+                  'dinner': 'Dinner '
+                }[day.mealPlan] || 'No Meals '
+              }</p>
             </div>
           `).join('')}
 
@@ -228,6 +270,15 @@ function App() {
             <p class="amount-detail">Package Amount: ₹${packageAmount.toLocaleString('en-IN')}</p>
             ${includeGST ? `<p class="gst-details">GST (18%): ₹${gstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>` : ''}
             <p class="total-amount">Total Amount: ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          </div>
+
+          <div class="terms-section">
+            <h3 class="amount-title mt-8">Terms and Conditions</h3>
+            <ul class="list-disc pl-5 space-y-2">
+              ${terms.filter(item => item.checked).map(item => `
+                <li class="text-gray-700">${item.text}</li>
+              `).join('')}
+            </ul>
           </div>
 
           <div class="footer">
@@ -301,6 +352,11 @@ function App() {
                   setNewExclusion={setNewExclusion}
                   addInclusion={addInclusion}
                   addExclusion={addExclusion}
+                  terms={terms}
+                  toggleTerm={toggleTerm}
+                  newTerm={newTerm}
+                  setNewTerm={setNewTerm}
+                  addTerm={addTerm}
                 />
                 <div className="mt-6">
                   <button

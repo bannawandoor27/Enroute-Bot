@@ -264,7 +264,7 @@ function App() {
 
   const generatePrintableItinerary = (brand) => {
     const printWindow = window.open('', '_blank');
-    const logoPath = brand === 'enroute' ? '/src/assets/logo_enroute.png' : '/src/assets/logo_backpack.png';
+    const logoPath = brand === 'enroute' ? 'https://res.cloudinary.com/dozsrgs3w/image/upload/v1738656618/ynvxcvfd6r8o5ibh8ru6.png' : 'https://res.cloudinary.com/dozsrgs3w/image/upload/v1738656617/nfaomnqwjpq2wxr4fb2a.png';
     const themeColor = brand === 'enroute' ? '#14665e' : '#0560C7';
     printWindow.document.write(`
       <html>

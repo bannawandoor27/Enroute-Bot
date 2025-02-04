@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import DayManager from './components/DayManager';
+import ParticipantDetails from './components/ParticipantDetails';
+import PackageDetails from './components/PackageDetails';
 
 function App() {
   const defaultInclusions = [
@@ -263,227 +266,42 @@ function App() {
                     onChange={(e) => setClientName(e.target.value)}
                   />
                 </div>
-                {days.map((day, index) => (
-                  <div key={index} className="mb-6 p-4 border rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-xl font-semibold">Day {index + 1}</h2>
-                      <button
-                        onClick={() => removeDay(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <input
-                      type="date"
-                      className="w-full p-2 border rounded mb-2"
-                      value={day.date || ''}
-                      onChange={(e) => updateDay(index, 'date', e.target.value)}
-                    />
-                    <textarea
-                      className="w-full p-2 border rounded mb-2"
-                      placeholder="Enter activities for this day"
-                      value={day.activities}
-                      onChange={(e) => updateDay(index, 'activities', e.target.value)}
-                    />
-                  </div>
-                ))}
-                <button
-                  onClick={addDay}
-                  className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  <PlusIcon className="h-5 w-5 mr-2" />
-                  Add Day
-                </button>
-                <div className="mt-4 p-4 border rounded-lg">
-                  <div className="space-y-4 mb-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of Adults (10+)</label>
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          className="w-full p-2 border rounded"
-                          value={participants.adults.count}
-                          onChange={(e) => handleNumberInput('adults', 'count', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Adult Cost per Head</label>
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          className="w-full p-2 border rounded"
-                          value={participants.adults.costPerHead}
-                          onChange={(e) => handleNumberInput('adults', 'costPerHead', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of Children (5-10)</label>
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          className="w-full p-2 border rounded"
-                          value={participants.children.count}
-                          onChange={(e) => handleNumberInput('children', 'count', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Child Cost per Head</label>
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          className="w-full p-2 border rounded"
-                          value={participants.children.costPerHead}
-                          onChange={(e) => handleNumberInput('children', 'costPerHead', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of Infants (under 5)</label>
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          className="w-full p-2 border rounded"
-                          value={participants.infants.count}
-                          onChange={(e) => handleNumberInput('infants', 'count', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Infant Cost per Head</label>
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          className="w-full p-2 border rounded"
-                          value={participants.infants.costPerHead}
-                          onChange={(e) => handleNumberInput('infants', 'costPerHead', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={isManualTotal}
-                        onChange={(e) => {
-                          setIsManualTotal(e.target.checked);
-                          if (!e.target.checked) {
-                            setPackageAmount(calculateAutoTotal());
-                          }
-                        }}
-                        className="mr-2"
-                      />
-                      <span className="text-sm text-gray-600">Override calculated total</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="w-48 p-2 border rounded"
-                      placeholder="Enter package amount"
-                      value={manualPackageAmount}
-                      onChange={(e) => {
-                        if (validateNumberInput(e.target.value)) {
-                          setManualPackageAmount(e.target.value);
-                          setPackageAmount(e.target.value === '' ? 0 : Number(e.target.value));
-                        }
-                      }}
-                      disabled={!isManualTotal}
-                    />
-                  </div>
-                  <div className="flex items-center mb-4">
-                    <input
-                      type="checkbox"
-                      id="includeGST"
-                      checked={includeGST}
-                      onChange={(e) => setIncludeGST(e.target.checked)}
-                      className="mr-2"
-                    />
-                    <label htmlFor="includeGST">Include GST (18%)</label>
-                  </div>
-                  
-                  <div className="mb-6 p-4 border rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">Package Inclusions</h3>
-                    <div className="space-y-2 mb-4 max-h-48 overflow-y-auto pr-2">
-                      {inclusions.map((item, index) => (
-                        <div key={index} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={item.checked}
-                            onChange={() => toggleInclusion(index)}
-                            className="mr-2"
-                          />
-                          <span className={item.checked ? 'text-gray-900' : 'text-gray-500'}>{item.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 p-2 border rounded"
-                        placeholder="Add new inclusion"
-                        value={newInclusion}
-                        onChange={(e) => setNewInclusion(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addInclusion()}
-                      />
-                      <button
-                        onClick={addInclusion}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mb-6 p-4 border rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">Package Exclusions</h3>
-                    <div className="space-y-2 mb-4 max-h-48 overflow-y-auto pr-2">
-                      {exclusions.map((item, index) => (
-                        <div key={index} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={item.checked}
-                            onChange={() => toggleExclusion(index)}
-                            className="mr-2"
-                          />
-                          <span className={item.checked ? 'text-gray-900' : 'text-gray-500'}>{item.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 p-2 border rounded"
-                        placeholder="Add new exclusion"
-                        value={newExclusion}
-                        onChange={(e) => setNewExclusion(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addExclusion()}
-                      />
-                      <button
-                        onClick={addExclusion}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-lg">Package Amount: ₹{packageAmount.toLocaleString('en-IN')}</p>
-                    {includeGST && (
-                      <p className="text-md text-gray-600">GST (18%): ₹{gstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    )}
-                    <p className="text-xl font-bold">Total Amount: ₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                  </div>
-                </div>
+                <DayManager
+                  days={days}
+                  updateDay={updateDay}
+                  removeDay={removeDay}
+                  addDay={addDay}
+                  PlusIcon={PlusIcon}
+                  TrashIcon={TrashIcon}
+                />
+                <ParticipantDetails
+                  participants={participants}
+                  handleNumberInput={handleNumberInput}
+                  isManualTotal={isManualTotal}
+                  setIsManualTotal={setIsManualTotal}
+                  calculateAutoTotal={calculateAutoTotal}
+                  manualPackageAmount={manualPackageAmount}
+                  setManualPackageAmount={setManualPackageAmount}
+                  setPackageAmount={setPackageAmount}
+                  validateNumberInput={validateNumberInput}
+                  includeGST={includeGST}
+                  setIncludeGST={setIncludeGST}
+                  packageAmount={packageAmount}
+                  gstAmount={gstAmount}
+                  totalAmount={totalAmount}
+                />
+                <PackageDetails
+                  inclusions={inclusions}
+                  exclusions={exclusions}
+                  toggleInclusion={toggleInclusion}
+                  toggleExclusion={toggleExclusion}
+                  newInclusion={newInclusion}
+                  setNewInclusion={setNewInclusion}
+                  newExclusion={newExclusion}
+                  setNewExclusion={setNewExclusion}
+                  addInclusion={addInclusion}
+                  addExclusion={addExclusion}
+                />
                 <div className="mt-6">
                   <button
                     onClick={generatePrintableItinerary}

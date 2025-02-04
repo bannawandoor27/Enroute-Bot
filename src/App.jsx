@@ -262,36 +262,48 @@ function App() {
     }
   }, [selectedTemplate]);
 
-  const generatePrintableItinerary = () => {
+  const generatePrintableItinerary = (brand) => {
     const printWindow = window.open('', '_blank');
+    const logoPath = brand === 'enroute' ? '/src/assets/logo_enroute.png' : '/src/assets/logo_backpack.png';
+    const themeColor = brand === 'enroute' ? '#14665e' : '#0560C7';
     printWindow.document.write(`
       <html>
         <head>
           <title>Travel Itinerary - ${clientName || 'Your Journey'}</title>
           <style>
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; background-color: #ffffff; }
-            .header { margin-bottom: 40px; border-bottom: 3px solid #14665e; padding-bottom: 15px; text-align: center; }
-            .title { font-size: 32px; color: #14665e; font-weight: bold; margin: 0; letter-spacing: 0.5px; }
-            .subtitle { font-size: 15px; color: rgba(20, 102, 94, 0.7); margin-top: 8px; }
-            .day-container { margin-bottom: 25px; padding: 20px; background-color: rgba(20, 102, 94, 0.03); border-radius: 10px; border: 1px solid rgba(20, 102, 94, 0.1); }
-            .day-title { font-size: 22px; color: #14665e; margin-bottom: 10px; font-weight: bold; letter-spacing: 0.3px; }
-            .day-date { font-size: 15px; color: rgba(20, 102, 94, 0.8); margin-bottom: 15px; font-weight: 500; }
-            .day-activities { font-size: 15px; color: #2c3e50; line-height: 1.8; }
-            .amount-section { margin-top: 35px; padding: 25px; background-color: rgba(20, 102, 94, 0.05); border-radius: 12px; border: 1px solid rgba(20, 102, 94, 0.15); }
-            .amount-title { font-size: 18px; color: #14665e; margin-bottom: 15px; font-weight: bold; letter-spacing: 0.3px; }
-            .amount-detail { font-size: 16px; color: #2c3e50; margin-bottom: 10px; font-weight: 500; }
-            .gst-details { font-size: 15px; color: rgba(20, 102, 94, 0.8); margin-bottom: 10px; }
-            .total-amount { font-size: 20px; color: #14665e; margin-top: 15px; font-weight: bold; letter-spacing: 0.3px; }
-            .footer { margin-top: 50px; border-top: 2px solid rgba(20, 102, 94, 0.1); padding-top: 25px; font-size: 13px; color: rgba(20, 102, 94, 0.6); text-align: center; }
-            @media print { body { padding: 20px; } }
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 10px; max-width: 750px; margin: 0 auto; background-color: #ffffff; color: #2c3e50; line-height: 1.3; }
+            .header { margin-bottom: 15px; position: relative; padding: 10px 0; text-align: center; background: linear-gradient(135deg, ${themeColor}0A, ${themeColor}16); border-radius: 8px; box-shadow: 0 2px 8px ${themeColor}0F; }
+            .logo { max-width: 150px; margin: 0 auto 15px; display: block; }
+            .title { font-family: 'Playfair Display', serif; font-size: 28px; color: ${themeColor}; font-weight: 700; margin: 0; letter-spacing: -0.3px; text-shadow: 1px 1px 2px ${themeColor}1A; position: relative; }
+            .title:after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 40px; height: 2px; background: linear-gradient(to right, transparent, ${themeColor}, transparent); }
+            .subtitle { font-size: 13px; color: #2c3e50; margin-top: 12px; font-weight: 500; letter-spacing: 0.2px; }
+            .day-container { margin-bottom: 12px; padding: 12px; background: #ffffff; border-radius: 8px; box-shadow: 0 1px 4px ${themeColor}0D; border: 1px solid ${themeColor}14; }
+            .day-title { font-family: 'Playfair Display', serif; font-size: 18px; color: ${themeColor}; margin-bottom: 6px; font-weight: 700; letter-spacing: -0.2px; }
+            .day-date { font-size: 13px; color: #2c3e50; margin-bottom: 8px; font-weight: 500; opacity: 0.9; border-bottom: 1px solid ${themeColor}14; padding-bottom: 6px; }
+            .day-activities { font-size: 13px; color: #2c3e50; line-height: 1.4; padding: 0; }
+            .amount-section { margin-top: 20px; padding: 15px; background: linear-gradient(165deg, #ffffff, ${themeColor}0A); border-radius: 8px; box-shadow: 0 1px 6px ${themeColor}0F; }
+            .amount-title { font-family: 'Playfair Display', serif; font-size: 18px; color: ${themeColor}; margin-bottom: 12px; font-weight: 700; letter-spacing: -0.2px; position: relative; padding-bottom: 6px; }
+            .amount-detail { font-size: 14px; color: #2c3e50; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.1px; }
+            .gst-details { font-size: 13px; color: #2c3e50; margin-bottom: 6px; font-weight: 500; padding: 4px 0; border-bottom: 1px dashed ${themeColor}1F; }
+            .total-amount { font-size: 18px; color: ${themeColor}; margin-top: 12px; font-weight: 700; letter-spacing: -0.2px; padding: 10px; background: ${themeColor}0A; border-radius: 6px; text-align: right; }
+            .footer { margin-top: 20px; padding-top: 15px; font-size: 12px; color: #2c3e50; text-align: center; position: relative; }
+            ul { padding-left: 12px; margin: 8px 0; }
+            li { margin-bottom: 4px; position: relative; padding-left: 2px; line-height: 1.4; }
+            @media print { 
+              body { padding: 10px; }
+              .day-container, .amount-section { margin-bottom: 10px; padding: 10px; }
+            }
           </style>
         </head>
         <body>
           <div class="header">
+            <img src="${logoPath}" alt="Brand Logo" class="logo" />
             <h1 class="title">Travel Itinerary</h1>
-            ${clientName ? `<p class="subtitle">Prepared for: ${clientName}</p>` : ''}
+            ${clientName ? `<p class="subtitle">Guest name: ${clientName}</p>` : ''}
             ${packageType ? `<p class="subtitle">Package Type: ${packageType}</p>` : ''}
             ${location ? `<p class="subtitle">Location: ${location}</p>` : ''}
+            <p class="subtitle">Total Guests: ${participants.adults.count + participants.children.count + participants.infants.count} (${participants.adults.count} Adults, ${participants.children.count} Children, ${participants.infants.count} Infants)</p>
             <p class="subtitle">Your Personalized Journey Plan</p>
           </div>
 
@@ -300,7 +312,7 @@ function App() {
               <h2 class="day-title">Day ${index + 1}${day.header ? `: ${day.header}` : ''}</h2>
               ${day.date ? `<p class="day-date">${new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>` : ''}
               <p class="day-activities">${day.activities || 'No activities planned'}</p>
-              <p class="day-meal-plan" style="color: #14665e; font-size: 15px; margin-top: 10px;">Meal Plan: ${
+              <p class="day-meal-plan" style="color: ${themeColor}; font-size: 15px; margin-top: 10px;">Meal Plan: ${
                 {
                   'none': 'No Meals ',
                   'breakfast': 'Breakfast ',
@@ -461,12 +473,18 @@ function App() {
                   setNewTerm={setNewTerm}
                   addTerm={addTerm}
                 />
-                <div className="mt-6">
+                <div className="mt-6 space-y-2">
                   <button
-                    onClick={generatePrintableItinerary}
+                    onClick={() => generatePrintableItinerary('enroute')}
                     className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                   >
-                    Generate Printable Itinerary
+                    Generate Enroute Itinerary
+                  </button>
+                  <button
+                    onClick={() => generatePrintableItinerary('backpack')}
+                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Generate Backpack Itinerary
                   </button>
                 </div>
               </div>

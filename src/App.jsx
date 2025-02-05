@@ -2,9 +2,21 @@ import React, { useState, useEffect } from 'react';
 import DayManager from './components/DayManager';
 import ParticipantDetails from './components/ParticipantDetails';
 import PackageDetails from './components/PackageDetails';
+import Login from './components/Login';
 import { supabase } from './supabaseClient';
+import { isAuthenticated, logout } from './auth';
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsLoggedIn(false);
+  };
   const defaultInclusions = [
     'Hotel Accommodation',
     'Breakfast',
@@ -236,7 +248,11 @@ function App() {
 
   const calculateAutoTotal = () => {
     const { adults, children, infants } = participants;
-    return (adults.count * adults.costPerHead) +
+    if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return (adults.count * adults.costPerHead) +
            (children.count * children.costPerHead) +
            (infants.count * infants.costPerHead);
   };
@@ -460,6 +476,10 @@ function App() {
     return <div>Loading icons...</div>;
   }
 
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 sm:max-w-4xl sm:mx-auto">
@@ -467,7 +487,13 @@ function App() {
           <div className="max-w-3xl mx-auto">
             <div className="space-y-8">
               <div className="space-y-6 text-gray-700">
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-2 relative">
+                  <button
+                    onClick={handleLogout}
+                    className="absolute right-0 top-0 px-4 py-2 text-sm text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    Logout
+                  </button>
                   <h1 className="text-3xl font-bold text-gray-900 font-playfair mb-2">Travel Itinerary Generator</h1>
                   <p className="text-gray-500 text-sm max-w-2xl mx-auto">Create beautiful, professional travel itineraries with ease</p>
                 </div>

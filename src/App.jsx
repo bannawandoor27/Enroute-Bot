@@ -35,31 +35,41 @@ function App() {
     let savedTerms = [];
 
     try {
-      const [exclusionsResult, inclusionsResult, termsResult] = await Promise.all([
-        supabase.from('custom_exclusions').select('text'),
-        supabase.from('custom_inclusions').select('text'),
-        supabase.from('custom_terms').select('text')
-      ]);
-      
-      if (exclusionsResult.error) throw exclusionsResult.error;
-      if (inclusionsResult.error) throw inclusionsResult.error;
-      if (termsResult.error) throw termsResult.error;
+      const { data: inclusionsData, error: inclusionsError } = await supabase
+        .from('custom_inclusions')
+        .select('text');
 
-      savedExclusions = exclusionsResult.data?.map(item => item.text) || [];
-      savedInclusions = inclusionsResult.data?.map(item => item.text) || [];
-      savedTerms = termsResult.data?.map(item => item.text) || [];
+      const { data: exclusionsData, error: exclusionsError } = await supabase
+        .from('custom_exclusions')
+        .select('text');
+
+      const { data: termsData, error: termsError } = await supabase
+        .from('custom_terms')
+        .select('text');
+
+      if (inclusionsError) throw inclusionsError;
+      if (exclusionsError) throw exclusionsError;
+      if (termsError) throw termsError;
+
+      savedInclusions = inclusionsData?.map(item => item.text) || [];
+      savedExclusions = exclusionsData?.map(item => item.text) || [];
+      savedTerms = termsData?.map(item => item.text) || [];
     } catch (error) {
       console.error('Error loading saved items:', error);
       // Use default values if there's an error
-      savedExclusions = [];
       savedInclusions = [];
+      savedExclusions = [];
       savedTerms = [];
     }
-    
-    const mergedInclusions = [...defaultInclusions, ...savedInclusions];
-    const mergedExclusions = [...defaultExclusions, ...savedExclusions];
-    const mergedTerms = [...defaultTerms, ...savedTerms];
-    
+
+    const mergedInclusions = [...new Set([...defaultInclusions, ...savedInclusions])];
+    const mergedExclusions = [...new Set([...defaultExclusions, ...savedExclusions])];
+    const mergedTerms = [...new Set([...defaultTerms, ...savedTerms])];
+
+    setInclusions(mergedInclusions.map(item => ({ text: item, checked: true })));
+    setExclusions(mergedExclusions.map(item => ({ text: item, checked: true })));
+    setTerms(mergedTerms.map(item => ({ text: item, checked: true })));
+
     return {
       inclusions: mergedInclusions.map(item => ({ text: item, checked: true })),
       exclusions: mergedExclusions.map(item => ({ text: item, checked: true })),

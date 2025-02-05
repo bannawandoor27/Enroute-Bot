@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DayManager from './components/DayManager';
 import ParticipantDetails from './components/ParticipantDetails';
 import PackageDetails from './components/PackageDetails';
+import { supabase } from './supabaseClient';
 
 function App() {
   const defaultInclusions = [
@@ -28,10 +29,32 @@ function App() {
     'Government issued photo ID is mandatory for check-in'
   ];
 
-  const loadSavedItems = () => {
-    const savedInclusions = JSON.parse(localStorage.getItem('customInclusions') || '[]');
-    const savedExclusions = JSON.parse(localStorage.getItem('customExclusions') || '[]');
-    const savedTerms = JSON.parse(localStorage.getItem('customTerms') || '[]');
+  const loadSavedItems = async () => {
+    let savedInclusions = [];
+    let savedExclusions = [];
+    let savedTerms = [];
+
+    try {
+      const [exclusionsResult, inclusionsResult, termsResult] = await Promise.all([
+        supabase.from('custom_exclusions').select('text'),
+        supabase.from('custom_inclusions').select('text'),
+        supabase.from('custom_terms').select('text')
+      ]);
+      
+      if (exclusionsResult.error) throw exclusionsResult.error;
+      if (inclusionsResult.error) throw inclusionsResult.error;
+      if (termsResult.error) throw termsResult.error;
+
+      savedExclusions = exclusionsResult.data?.map(item => item.text) || [];
+      savedInclusions = inclusionsResult.data?.map(item => item.text) || [];
+      savedTerms = termsResult.data?.map(item => item.text) || [];
+    } catch (error) {
+      console.error('Error loading saved items:', error);
+      // Use default values if there's an error
+      savedExclusions = [];
+      savedInclusions = [];
+      savedTerms = [];
+    }
     
     const mergedInclusions = [...defaultInclusions, ...savedInclusions];
     const mergedExclusions = [...defaultExclusions, ...savedExclusions];
@@ -44,7 +67,15 @@ function App() {
     };
   };
 
-  const initialState = loadSavedItems();
+  const [initialState, setInitialState] = useState({
+    inclusions: defaultInclusions.map(item => ({ text: item, checked: true })),
+    exclusions: defaultExclusions.map(item => ({ text: item, checked: true })),
+    terms: defaultTerms.map(item => ({ text: item, checked: true }))
+  });
+
+  useEffect(() => {
+    loadSavedItems().then(state => setInitialState(state));
+  }, []);
   const PlusIcon = window.HeroiconsOutline?.PlusIcon;
   const TrashIcon = window.HeroiconsOutline?.TrashIcon;
 
@@ -70,29 +101,43 @@ function App() {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
 
-  const addInclusion = () => {
+  const addInclusion = async () => {
     if (newInclusion.trim()) {
-      const updatedInclusions = [...inclusions, { text: newInclusion.trim(), checked: true }];
-      setInclusions(updatedInclusions);
-      setNewInclusion('');
+      const newInclusionText = newInclusion.trim();
+      const updatedInclusions = [...inclusions, { text: newInclusionText, checked: true }];
       
-      const customInclusions = updatedInclusions
-        .filter(item => !defaultInclusions.includes(item.text))
-        .map(item => item.text);
-      localStorage.setItem('customInclusions', JSON.stringify(customInclusions));
+      try {
+        const { error } = await supabase
+          .from('custom_inclusions')
+          .insert([{ text: newInclusionText }]);
+
+        if (error) throw error;
+        
+        setInclusions(updatedInclusions);
+        setNewInclusion('');
+      } catch (error) {
+        console.error('Error adding inclusion:', error);
+      }
     }
   };
 
-  const addTerm = () => {
+  const addTerm = async () => {
     if (newTerm.trim()) {
-      const updatedTerms = [...terms, { text: newTerm.trim(), checked: true }];
-      setTerms(updatedTerms);
-      setNewTerm('');
+      const newTermText = newTerm.trim();
+      const updatedTerms = [...terms, { text: newTermText, checked: true }];
       
-      const customTerms = updatedTerms
-        .filter(item => !defaultTerms.includes(item.text))
-        .map(item => item.text);
-      localStorage.setItem('customTerms', JSON.stringify(customTerms));
+      try {
+        const { error } = await supabase
+          .from('custom_terms')
+          .insert([{ text: newTermText }]);
+
+        if (error) throw error;
+        
+        setTerms(updatedTerms);
+        setNewTerm('');
+      } catch (error) {
+        console.error('Error adding term:', error);
+      }
     }
   };
 
@@ -103,16 +148,23 @@ function App() {
     setTerms(newTerms);
   };
 
-  const addExclusion = () => {
+  const addExclusion = async () => {
     if (newExclusion.trim()) {
-      const updatedExclusions = [...exclusions, { text: newExclusion.trim(), checked: true }];
-      setExclusions(updatedExclusions);
-      setNewExclusion('');
+      const newExclusionText = newExclusion.trim();
+      const updatedExclusions = [...exclusions, { text: newExclusionText, checked: true }];
       
-      const customExclusions = updatedExclusions
-        .filter(item => !defaultExclusions.includes(item.text))
-        .map(item => item.text);
-      localStorage.setItem('customExclusions', JSON.stringify(customExclusions));
+      try {
+        const { error } = await supabase
+          .from('custom_exclusions')
+          .insert([{ text: newExclusionText }]);
+
+        if (error) throw error;
+        
+        setExclusions(updatedExclusions);
+        setNewExclusion('');
+      } catch (error) {
+        console.error('Error adding exclusion:', error);
+      }
     }
   };
 
@@ -200,56 +252,70 @@ function App() {
   const gstAmount = includeGST ? packageAmount * gstRate : 0;
   const totalAmount = packageAmount + gstAmount;
 
-  const loadTemplates = () => {
-    const savedTemplates = JSON.parse(localStorage.getItem('packageTemplates') || '[]');
-    setTemplates(savedTemplates);
+  const loadTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('package_templates')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      setTemplates([]);
+    }
   };
 
-  const saveCurrentAsTemplate = () => {
+  const saveCurrentAsTemplate = async () => {
     if (!location || !packageType) return;
 
     const templateName = `${location} - ${packageType}`;
     const templateData = {
       name: templateName,
-      location,
-      packageType,
-      days,
-      participants,
-      inclusions: inclusions.map(item => ({ ...item })),
-      exclusions: exclusions.map(item => ({ ...item })),
-      terms: terms.map(item => ({ ...item })),
-      includeGST,
-      isManualTotal,
-      packageAmount
+      data: {
+        location,
+        packageType,
+        days,
+        participants,
+        inclusions: inclusions.map(item => ({ ...item })),
+        exclusions: exclusions.map(item => ({ ...item })),
+        terms: terms.map(item => ({ ...item })),
+        includeGST,
+        isManualTotal,
+        packageAmount
+      }
     };
 
-    const existingTemplates = JSON.parse(localStorage.getItem('packageTemplates') || '[]');
-    const templateIndex = existingTemplates.findIndex(t => t.name === templateName);
+    try {
+      const { error: upsertError } = await supabase
+        .from('package_templates')
+        .upsert(templateData, { onConflict: 'name' });
 
-    if (templateIndex >= 0) {
-      existingTemplates[templateIndex] = templateData;
-    } else {
-      existingTemplates.push(templateData);
+      if (upsertError) throw upsertError;
+
+      // Refresh templates list
+      loadTemplates();
+    } catch (error) {
+      console.error('Error saving template:', error);
     }
-
-    localStorage.setItem('packageTemplates', JSON.stringify(existingTemplates));
-    setTemplates(existingTemplates);
   };
 
   const loadTemplate = (templateName) => {
     const template = templates.find(t => t.name === templateName);
-    if (!template) return;
+    if (!template || !template.data) return;
 
-    setLocation(template.location);
-    setPackageType(template.packageType);
-    setDays(template.days.map(day => ({ ...day })));
-    setParticipants({ ...template.participants });
-    setInclusions(template.inclusions.map(item => ({ ...item })));
-    setExclusions(template.exclusions.map(item => ({ ...item })));
-    setTerms(template.terms.map(item => ({ ...item })));
-    setIncludeGST(template.includeGST);
-    setIsManualTotal(template.isManualTotal);
-    setPackageAmount(template.packageAmount);
+    const { data } = template;
+    setLocation(data.location);
+    setPackageType(data.packageType);
+    setDays(data.days.map(day => ({ ...day })));
+    setParticipants({ ...data.participants });
+    setInclusions(data.inclusions.map(item => ({ ...item })));
+    setExclusions(data.exclusions.map(item => ({ ...item })));
+    setTerms(data.terms.map(item => ({ ...item })));
+    setIncludeGST(data.includeGST);
+    setIsManualTotal(data.isManualTotal);
+    setPackageAmount(data.packageAmount);
   };
 
   useEffect(() => {

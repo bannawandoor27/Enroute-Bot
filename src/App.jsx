@@ -3,19 +3,32 @@ import DayManager from './components/DayManager';
 import ParticipantDetails from './components/ParticipantDetails';
 import PackageDetails from './components/PackageDetails';
 import Login from './components/Login';
+import ItineraryList from './components/ItineraryList';
+import Modal from './components/Modal';
 import { supabase } from './supabaseClient';
 import { authenticateUser, isAuthenticated, logout, getUser } from './auth';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
+  const [showItineraryList, setShowItineraryList] = useState(true);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
+    setShowItineraryList(true);
   };
 
   const handleLogout = () => {
     logout();
     setIsLoggedIn(false);
+    setShowItineraryList(true);
+  };
+
+  const handleCreateNew = () => {
+    setShowItineraryList(false);
+  };
+
+  const handleBackToList = () => {
+    setShowItineraryList(true);
   };
   const defaultInclusions = [
     'Hotel Accommodation',
@@ -252,6 +265,10 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  if (showItineraryList) {
+    return <ItineraryList onCreateNew={handleCreateNew} />;
+  }
+
   return (adults.count * adults.costPerHead) +
            (children.count * children.costPerHead) +
            (infants.count * infants.costPerHead);
@@ -361,7 +378,17 @@ function App() {
     return `${prefix}${timestamp}${randomChars}`;
   };
 
+  const [showModal, setShowModal] = useState(false);
+  const [pendingBrand, setPendingBrand] = useState(null);
+
   const generatePrintableItinerary = async (brand) => {
+    setPendingBrand(brand);
+    setShowModal(true);
+  };
+
+  const handleModalConfirm = async () => {
+    const brand = pendingBrand;
+    setShowModal(false);
     const bookingCode = generateBookingCode(brand);
     const user = getUser();
     
@@ -521,6 +548,10 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  if (showItineraryList) {
+    return <ItineraryList onCreateNew={handleCreateNew} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-4 sm:py-8 px-4 sm:px-6 flex flex-col justify-between">
       <div className="w-full max-w-4xl mx-auto">
@@ -644,6 +675,13 @@ function App() {
           Logout
         </button>
       </div>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleModalConfirm}
+        title="Save Itinerary"
+        message="Do you want to save this itinerary and generate a printable version?"
+      />
     </div>
   );
 }

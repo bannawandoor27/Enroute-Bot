@@ -4,7 +4,7 @@ import ParticipantDetails from './components/ParticipantDetails';
 import PackageDetails from './components/PackageDetails';
 import Login from './components/Login';
 import { supabase } from './supabaseClient';
-import { isAuthenticated, logout } from './auth';
+import { authenticateUser, isAuthenticated, logout, getUser } from './auth';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
@@ -354,7 +354,48 @@ function App() {
     }
   }, [selectedTemplate]);
 
-  const generatePrintableItinerary = (brand) => {
+  const generateBookingCode = (brand) => {
+    const prefix = brand === 'enroute' ? 'E' : 'B';
+    const timestamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 12);
+    const randomChars = Math.random().toString(36).toUpperCase().slice(2, 6);
+    return `${prefix}${timestamp}${randomChars}`;
+  };
+
+  const generatePrintableItinerary = async (brand) => {
+    const bookingCode = generateBookingCode(brand);
+    const user = getUser();
+    
+    // Save itinerary data to Supabase
+    try {
+      const itineraryData = {
+        booking_code: bookingCode,
+        username: user.username,
+        brand,
+        itinerary_data: {
+          clientName,
+          packageType,
+          location,
+          days,
+          participants,
+          inclusions: inclusions.filter(item => item.checked),
+          exclusions: exclusions.filter(item => item.checked),
+          terms: terms.filter(item => item.checked),
+          packageAmount,
+          includeGST,
+          gstAmount,
+          totalAmount
+        }
+      };
+
+      const { error } = await supabase
+        .from('itineraries')
+        .insert([itineraryData]);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving itinerary:', error);
+    }
+
     const printWindow = window.open('', '_blank');
     const logoPath = brand === 'enroute' ? 'https://res.cloudinary.com/dozsrgs3w/image/upload/v1738656618/ynvxcvfd6r8o5ibh8ru6.png' : 'https://res.cloudinary.com/dozsrgs3w/image/upload/v1738656617/nfaomnqwjpq2wxr4fb2a.png';
     const themeColor = brand === 'enroute' ? '#14665e' : '#0560C7';

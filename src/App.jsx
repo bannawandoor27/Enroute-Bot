@@ -481,27 +481,20 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-4xl sm:mx-auto">
-        <div className="relative px-6 py-10 bg-white/90 backdrop-blur-sm mx-8 md:mx-0 shadow-xl rounded-3xl sm:p-12 border border-white/20">
-          <div className="max-w-3xl mx-auto">
-            <div className="space-y-8">
-              <div className="space-y-6 text-gray-700">
-                <div className="text-center space-y-2 relative">
-                  <button
-                    onClick={handleLogout}
-                    className="absolute right-0 top-0 px-4 py-2 text-sm text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  >
-                    Logout
-                  </button>
-                  <h1 className="text-3xl font-bold text-gray-900 font-playfair mb-2">Travel Itinerary Generator</h1>
-                  <p className="text-gray-500 text-sm max-w-2xl mx-auto">Create beautiful, professional travel itineraries with ease</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-4 sm:py-8 px-4 sm:px-6 flex flex-col justify-between">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="px-4 sm:px-6 py-6 sm:py-10 bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl sm:rounded-3xl border border-white/20">
+          <div className="w-full max-w-3xl mx-auto">
+            <div className="space-y-6 sm:space-y-8">
+              <div className="space-y-4 sm:space-y-6 text-gray-700">
+                <div className="text-center space-y-2 relative px-2 sm:px-0 mb-8">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-playfair mb-2 pt-2">Travel Itinerary Generator</h1>
+                  <p className="text-gray-500 text-xs sm:text-sm max-w-2xl mx-auto">Create beautiful, professional travel itineraries with ease</p>
                 </div>
-                <h1 className="text-2xl font-bold mb-8 text-center">Travel Itinerary Generator</h1>
-                <div className="mb-6">
-                  <div className="flex gap-2 mb-4">
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-4">
                     <select
-                      className="flex-1 p-2 border rounded"
+                      className="flex-1 p-2 border rounded text-sm"
                       value={selectedTemplate}
                       onChange={(e) => setSelectedTemplate(e.target.value)}
                     >
@@ -514,7 +507,7 @@ function App() {
                     </select>
                     <button
                       onClick={saveCurrentAsTemplate}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap"
                       disabled={!location || !packageType}
                     >
                       Save as Template
@@ -522,21 +515,21 @@ function App() {
                   </div>
                   <input
                     type="text"
-                    className="w-full p-2 border rounded mb-2"
+                    className="w-full p-2 border rounded mb-2 text-sm"
                     placeholder="Client Name (Optional)"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                   />
                   <input
                     type="text"
-                    className="w-full p-2 border rounded mb-2"
+                    className="w-full p-2 border rounded mb-2 text-sm"
                     placeholder="Package Type (e.g., Honeymoon, Family, Adventure)"
                     value={packageType}
                     onChange={(e) => setPackageType(e.target.value)}
                   />
                   <input
                     type="text"
-                    className="w-full p-2 border rounded mb-2"
+                    className="w-full p-2 border rounded mb-2 text-sm"
                     placeholder="Location"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
@@ -586,13 +579,13 @@ function App() {
                 <div className="mt-6 space-y-2">
                   <button
                     onClick={() => generatePrintableItinerary('enroute')}
-                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-xs sm:text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                   >
                     Generate Enroute Itinerary
                   </button>
                   <button
                     onClick={() => generatePrintableItinerary('backpack')}
-                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                   >
                     Generate Backpack Itinerary
                   </button>
@@ -601,6 +594,14 @@ function App() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="w-full max-w-4xl mx-auto mt-8 flex justify-end">
+        <button
+          onClick={handleLogout}
+          className="px-6 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md shadow-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

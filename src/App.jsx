@@ -385,12 +385,16 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
-          <div className="max-w-md mx-auto">
-            <div className="divide-y divide-gray-200">
-              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-4xl sm:mx-auto">
+        <div className="relative px-6 py-10 bg-white/90 backdrop-blur-sm mx-8 md:mx-0 shadow-xl rounded-3xl sm:p-12 border border-white/20">
+          <div className="max-w-3xl mx-auto">
+            <div className="space-y-8">
+              <div className="space-y-6 text-gray-700">
+                <div className="text-center space-y-2">
+                  <h1 className="text-3xl font-bold text-gray-900 font-playfair mb-2">Travel Itinerary Generator</h1>
+                  <p className="text-gray-500 text-sm max-w-2xl mx-auto">Create beautiful, professional travel itineraries with ease</p>
+                </div>
                 <h1 className="text-2xl font-bold mb-8 text-center">Travel Itinerary Generator</h1>
                 <div className="mb-6">
                   <div className="flex gap-2 mb-4">

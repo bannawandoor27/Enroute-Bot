@@ -2,6 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { getUser } from '../auth';
 
+const getPackageDates = (itinerary) => {
+  if (!itinerary?.itinerary_data?.days || itinerary.itinerary_data.days.length === 0) {
+    return 'N/A';
+  }
+
+  const dates = itinerary.itinerary_data.days
+    .map(day => day.date)
+    .filter(date => date) // Remove empty dates
+    .sort();
+
+  if (dates.length === 0) {
+    return 'N/A';
+  }
+
+  const startDate = new Date(dates[0]);
+  const endDate = new Date(dates[dates.length - 1]);
+
+  return `${startDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  })} - ${endDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })}`;
+};
+
 function ItineraryList({ onCreateNew }) {
   const [itineraries, setItineraries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,6 +37,7 @@ function ItineraryList({ onCreateNew }) {
   const [pageCount, setPageCount] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const user = getUser();
 
   useEffect(() => {
@@ -39,6 +67,14 @@ function ItineraryList({ onCreateNew }) {
       setLoading(false);
     }
   };
+
+  const filteredItineraries = itineraries.filter(itinerary => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      itinerary.booking_code.toLowerCase().includes(searchLower) ||
+      (itinerary.itinerary_data.clientName || '').toLowerCase().includes(searchLower)
+    );
+  });
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -123,6 +159,23 @@ function ItineraryList({ onCreateNew }) {
           </button>
         </div>
 
+        <div className="mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by client name or booking code..."
+              className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto relative">
             <table className="min-w-full divide-y divide-gray-200 table-auto">
@@ -138,11 +191,12 @@ function ItineraryList({ onCreateNew }) {
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Created By</th>
                   )}
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[160px]">Created At</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">Actions</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">Package Dates</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {itineraries.map((itinerary) => (
+                {filteredItineraries.map((itinerary) => (
                   <tr key={itinerary.id} className="hover:bg-gray-50">
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{itinerary.booking_code}</td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.clientName || 'N/A'}</td>
@@ -154,6 +208,7 @@ function ItineraryList({ onCreateNew }) {
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.username}</td>
                     )}
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(itinerary.created_at)}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getPackageDates(itinerary)}</td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="relative">
                         <button

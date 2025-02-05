@@ -6,6 +6,8 @@ function ItineraryList({ onCreateNew }) {
   const [itineraries, setItineraries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
   const user = getUser();
 
   useEffect(() => {
@@ -76,37 +78,76 @@ function ItineraryList({ onCreateNew }) {
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Code</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-                {user.username === 'admin' && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
-                )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {itineraries.map((itinerary) => (
-                <tr key={itinerary.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{itinerary.booking_code}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.clientName || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.packageType || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.location || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{itinerary.brand}</td>
+          <div className="overflow-x-auto relative">
+            <table className="min-w-full divide-y divide-gray-200 table-auto">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Booking Code</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Client Name</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Package Type</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Location</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">Brand</th>
                   {user.username === 'admin' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.username}</td>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Created By</th>
                   )}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(itinerary.created_at)}</td>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[160px]">Created At</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {itineraries.map((itinerary) => (
+                  <tr key={itinerary.id} className="hover:bg-gray-50">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{itinerary.booking_code}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.clientName || 'N/A'}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.packageType || 'N/A'}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.itinerary_data.location || 'N/A'}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{itinerary.brand}</td>
+                    {user.username === 'admin' && (
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{itinerary.username}</td>
+                    )}
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(itinerary.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {itineraries.length > 0 && (
+          <div className="mt-6 flex justify-center">
+            <nav className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Previous
+              </button>
+              <span className="px-4 py-1 text-sm text-gray-600">
+                Page {currentPage} of {pageCount}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(pageCount, prev + 1))}
+                disabled={currentPage === pageCount}
+                className={`px-3 py-1 rounded-md ${currentPage === pageCount ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(pageCount)}
+                disabled={currentPage === pageCount}
+                className={`px-3 py-1 rounded-md ${currentPage === pageCount ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Last
+              </button>
+            </nav>
+          </div>
+        )}
       </div>
     </div>
   );
